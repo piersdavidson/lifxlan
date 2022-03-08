@@ -10,6 +10,7 @@ import random
 from .device import DEFAULT_ATTEMPTS, DEFAULT_TIMEOUT, Device, UDP_BROADCAST_IP_ADDRS, UDP_BROADCAST_PORT
 from .errors import InvalidParameterException, WorkflowException
 from .light import Light
+from .switch import Switch
 from .message import BROADCAST_MAC
 from .msgtypes import Acknowledgement, GetService, LightGet, LightGetPower, LightSetColor, LightSetPower, \
     LightSetWaveform, LightState, LightStatePower, StateService
@@ -26,6 +27,7 @@ class LifxLAN:
         self.num_lights = num_lights
         self.devices = None
         self.lights = None
+        self.switches = None
         self.verbose = verbose
 
     ############################################################################
@@ -42,10 +44,15 @@ class LifxLAN:
         self.discover_devices()
         return self.lights
 
+    def get_switches(self):
+        self.discover_devices()
+        return self.switches
+
     # more of an internal helper function
     # forces a refresh of the internal list of available devices
     def discover_devices(self):
         self.lights = []
+        self.switches = []
         self.devices = []
         responses = self.broadcast_with_resp(GetService, StateService,)
         for r in responses:
@@ -59,6 +66,9 @@ class LifxLAN:
                     else:
                         device = Light(r.target_addr, r.ip_addr, r.service, r.port, self.source_id, self.verbose)
                     self.lights.append(device)
+                elif device.is_switch():
+                    device = Switch(r.target_addr, r.ip_addr, r.service, r.port, self.source_id, self.verbose)
+                    self.switches.append(device)
             except WorkflowException:
                 # cheating -- it just so happens that all LIFX devices are lights right now
                 device = Light(r.target_addr, r.ip_addr, r.service, r.port, self.source_id, self.verbose)

@@ -333,7 +333,6 @@ class EchoResponse(Message):
         payload = byte_array
         return payload
 
-
 ##### LIGHT MESSAGES #####
 
 
